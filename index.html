@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peak Patrimoine — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ============================================================
+   PEAK PATRIMOINE — Dashboard
+   Palette : #F0A738 ambre chaud sur fonds sombres
+   ============================================================ */
+
+:root {
+  --ambre:     #F0A738;
+  --ambre-d:   #C8832A;
+  --ambre-l:   #FDF3E3;
+  --ambre-m:   #F5D9A8;
+  --noir:      #0D0D0D;
+  --noir-2:    #161616;
+  --noir-3:    #1E1E1E;
+  --noir-4:    #252525;
+  --gris-f:    #3A3A3A;
+  --gris:      #6B6B6B;
+  --gris-l:    #F7F5F1;
+  --blanc:     #FFFFFF;
+  --bord:      rgba(240,167,56,0.12);
+  --bord-2:    rgba(240,167,56,0.22);
+  --bord-3:    rgba(255,255,255,0.07);
+  --green:     #4ade80;
+  --green-bg:  rgba(74,222,128,0.1);
+  --red:       #f87171;
+  --red-bg:    rgba(248,113,113,0.1);
+  /* catégories */
+  --c-bank:      #3b82f6;
+  --c-invest:    #4ade80;
+  --c-assurance: #F0A738;
+  --c-immo:      #fb923c;
+  --c-crypto:    #c084fc;
+  --c-crowd:     #2dd4bf;
+  --r: 12px;
+  --r-sm: 7px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--noir);
+  color: var(--blanc);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ── LAYOUT ───────────────────────────────────────────── */
+.app { display: flex; min-height: 100vh; }
+
+/* ── SIDEBAR ──────────────────────────────────────────── */
+.sidebar {
+  width: 230px; flex-shrink: 0;
+  background: var(--noir-2);
+  border-right: 1px solid var(--bord);
+  display: flex; flex-direction: column;
+  position: sticky; top: 0; height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-logo {
+  padding: 22px 22px 18px;
+  border-bottom: 1px solid var(--bord);
+  display: flex; align-items: center; gap: 11px;
+}
+.logo-icon {
+  width: 34px; height: 34px;
+  background: var(--ambre);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px; font-weight: 600;
+  color: var(--noir); flex-shrink: 0;
+}
+.logo-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px; font-weight: 600;
+  color: var(--blanc); letter-spacing: 0.01em;
+}
+.logo-text span { color: var(--ambre); }
+
+/* Net worth widget */
+.sidebar-nw {
+  margin: 14px 14px 4px;
+  background: var(--noir-3);
+  border: 1px solid var(--bord-2);
+  border-radius: var(--r);
+  padding: 16px;
+}
+.snw-label {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ambre); margin-bottom: 6px; display: block;
+}
+.snw-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px; font-weight: 600;
+  letter-spacing: -0.5px; color: var(--blanc);
+}
+.snw-change {
+  font-size: 12px; margin-top: 4px; font-weight: 500;
+}
+.snw-change.up { color: var(--green); }
+.snw-change.down { color: var(--red); }
+
+/* Nav */
+.nav-section {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: rgba(240,167,56,0.35);
+  padding: 18px 22px 6px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px; margin: 1px 8px;
+  border-radius: var(--r-sm);
+  font-size: 13.5px; font-weight: 400;
+  color: rgba(255,255,255,0.42);
+  cursor: pointer; transition: all 0.15s;
+  position: relative;
+}
+.nav-item:hover { background: var(--noir-3); color: rgba(255,255,255,0.75); }
+.nav-item.active {
+  background: rgba(240,167,56,0.1);
+  color: var(--ambre);
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 18px; background: var(--ambre);
+  border-radius: 0 2px 2px 0;
+}
+.nav-icon { font-size: 15px; width: 20px; text-align: center; opacity: 0.7; }
+.nav-item.active .nav-icon { opacity: 1; }
+
+.sidebar-bottom {
+  margin-top: auto; padding: 14px;
+  border-top: 1px solid var(--bord);
+}
+.btn-upgrade {
+  width: 100%;
+  background: rgba(240,167,56,0.12);
+  border: 1px solid var(--bord-2);
+  color: var(--ambre);
+  border-radius: var(--r-sm);
+  padding: 10px; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; transition: all 0.18s;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: 0.02em;
+}
+.btn-upgrade:hover {
+  background: rgba(240,167,56,0.2);
+  border-color: var(--ambre);
+}
+
+/* ── TOPBAR ───────────────────────────────────────────── */
+.main { flex: 1; overflow-x: hidden; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 32px;
+  border-bottom: 1px solid var(--bord);
+  background: rgba(13,13,13,0.96);
+  backdrop-filter: blur(16px);
+  position: sticky; top: 0; z-index: 10;
+}
+
+.topbar-tabs { display: flex; gap: 4px; }
+.tab {
+  padding: 7px 16px; border-radius: var(--r-sm);
+  font-size: 13px; font-weight: 400;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer; transition: all 0.15s;
+}
+.tab:hover { color: rgba(255,255,255,0.7); }
+.tab.active {
+  background: var(--noir-3);
+  color: var(--blanc); font-weight: 500;
+  border: 1px solid var(--bord);
+}
+
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.btn-add {
+  background: var(--ambre); color: var(--noir);
+  border: none; border-radius: var(--r-sm);
+  padding: 8px 18px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.18s; letter-spacing: 0.01em;
+}
+.btn-add:hover { background: var(--ambre-d); color: var(--blanc); }
+
+.topbar-avatar {
+  width: 32px; height: 32px;
+  background: var(--noir-4); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; color: var(--ambre);
+  cursor: pointer; border: 1px solid var(--bord-2);
+}
+
+/* ── CONTENT ──────────────────────────────────────────── */
+.content { padding: 32px; max-width: 1260px; }
+
+/* ── HERO ─────────────────────────────────────────────── */
+.hero-row {
+  display: flex; align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
+}
+
+.hero-value-block {}
+.hero-eyebrow {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--ambre); margin-bottom: 6px; display: block;
+}
+.hero-value {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(36px, 5vw, 52px);
+  font-weight: 600; color: var(--blanc);
+  letter-spacing: -1.5px; line-height: 1;
+}
+.hero-sub {
+  display: flex; align-items: center; gap: 10px; margin-top: 10px;
+}
+.perf-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 5px;
+  font-size: 12.5px; font-weight: 600;
+}
+.perf-badge.up { background: var(--green-bg); color: var(--green); }
+.perf-badge.down { background: var(--red-bg); color: var(--red); }
+.hero-date { font-size: 12px; color: rgba(255,255,255,0.3); }
+
+.time-tabs { display: flex; gap: 4px; }
+.tt {
+  padding: 6px 13px; border-radius: var(--r-sm);
+  font-size: 12.5px; font-weight: 500;
+  color: rgba(255,255,255,0.3);
+  cursor: pointer; transition: all 0.15s;
+  border: 1px solid transparent;
+}
+.tt:hover { color: rgba(255,255,255,0.65); }
+.tt.active {
+  background: var(--noir-3);
+  color: var(--ambre);
+  border-color: var(--bord-2);
+}
+
+/* ── AREA CHART ───────────────────────────────────────── */
+.chart-card {
+  background: var(--noir-2);
+  border: 1px solid var(--bord);
+  border-radius: var(--r);
+  padding: 22px 22px 16px;
+  margin-bottom: 28px;
+}
+.chart-top {
+  display: flex; align-items: center;
+  justify-content: space-between; margin-bottom: 18px;
+}
+.chart-title {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(240,167,56,0.6);
+}
+.chart-range-lbl { font-size: 11.5px; color: rgba(255,255,255,0.22); }
+.chart-wrap { position: relative; height: 210px; }
+
+/* ── STATS ROW ────────────────────────────────────────── */
+.stats-row {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 14px; margin-bottom: 28px;
+}
+@media (max-width: 920px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+
+.stat-card {
+  background: var(--noir-2);
+  border: 1px solid var(--bord);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: var(--bord-2); }
+.stat-card-eyebrow {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: rgba(255,255,255,0.28); margin-bottom: 8px;
+}
+.stat-card-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px; font-weight: 600;
+  letter-spacing: -0.5px; color: var(--blanc);
+  margin-bottom: 4px;
+}
+.stat-card-val.up { color: var(--green); }
+.stat-card-val.down { color: var(--red); }
+.stat-card-val.ambre { color: var(--ambre); }
+.stat-card-sub { font-size: 11.5px; color: rgba(255,255,255,0.28); }
+
+/* ── SPLIT ────────────────────────────────────────────── */
+.split { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 20px; margin-bottom: 28px; }
+@media (max-width: 1020px) { .split { grid-template-columns: 1fr; } }
+
+/* ── CAT ROWS ─────────────────────────────────────────── */
+.cat-block {
+  background: var(--noir-2);
+  border: 1px solid var(--bord);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.block-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--bord);
+}
+.block-title {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(240,167,56,0.6);
+}
+.sort-sel {
+  background: var(--noir-3); border: 1px solid var(--bord);
+  color: rgba(255,255,255,0.45); border-radius: 5px;
+  padding: 4px 9px; font-size: 11.5px;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer; outline: none;
+}
+.sort-sel option { background: var(--noir-3); }
+
+.cat-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 20px; cursor: pointer;
+  border-bottom: 1px solid var(--bord);
+  transition: background 0.14s;
+}
+.cat-row:last-child { border-bottom: none; }
+.cat-row:hover { background: rgba(240,167,56,0.04); }
+
+.cat-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.cat-name { font-size: 13px; font-weight: 500; flex: 1; color: rgba(255,255,255,0.82); }
+.cat-count { font-size: 11px; color: rgba(255,255,255,0.25); flex: 0.7; }
+.cat-bar-wrap { flex: 1; height: 3px; background: rgba(255,255,255,0.07); border-radius: 99px; overflow: hidden; }
+.cat-bar-fill { height: 100%; border-radius: 99px; transition: width 0.55s ease; }
+.cat-pct { font-size: 11.5px; color: rgba(255,255,255,0.3); width: 38px; text-align: right; }
+.cat-val { font-size: 13px; font-weight: 600; width: 105px; text-align: right; color: var(--blanc); }
+
+/* ── DONUT ────────────────────────────────────────────── */
+.donut-card {
+  background: var(--noir-2);
+  border: 1px solid var(--bord);
+  border-radius: var(--r);
+  padding: 20px;
+  display: flex; flex-direction: column;
+}
+.donut-wrap { position: relative; height: 210px; margin-bottom: 18px; }
+.donut-center {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  text-align: center; pointer-events: none;
+}
+.donut-center-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px; font-weight: 600;
+  color: var(--blanc);
+}
+.donut-center-lbl {
+  font-size: 9.5px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ambre); margin-top: 3px;
+}
+
+.donut-legend { display: flex; flex-direction: column; gap: 9px; }
+.legend-row { display: flex; align-items: center; gap: 8px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.legend-name { font-size: 12px; color: rgba(255,255,255,0.5); flex: 1; }
+.legend-pct { font-size: 11.5px; color: rgba(255,255,255,0.28); }
+.legend-val { font-size: 12.5px; font-weight: 600; width: 90px; text-align: right; color: var(--blanc); }
+
+/* ── TABLE ────────────────────────────────────────────── */
+.table-card {
+  background: var(--noir-2);
+  border: 1px solid var(--bord);
+  border-radius: var(--r);
+  overflow: hidden; margin-bottom: 28px;
+}
+
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  padding: 12px 20px; text-align: left;
+  font-size: 10px; font-weight: 600;
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  border-bottom: 1px solid var(--bord);
+  background: var(--noir-2);
+}
+tbody tr { transition: background 0.12s; cursor: default; }
+tbody tr:hover { background: rgba(240,167,56,0.04); }
+tbody td {
+  padding: 14px 20px; font-size: 13.5px;
+  border-bottom: 1px solid var(--bord);
+}
+tbody tr:last-child td { border-bottom: none; }
+
+.asset-wrap { display: flex; align-items: center; gap: 11px; }
+.asset-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+.asset-name { font-weight: 500; font-size: 13.5px; color: var(--blanc); }
+.asset-sub { font-size: 11px; color: rgba(255,255,255,0.28); margin-top: 1px; }
+
+.tag-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 99px;
+  font-size: 11.5px; font-weight: 500; white-space: nowrap;
+}
+
+.chg-up { color: var(--green); font-size: 12.5px; font-weight: 500; }
+.chg-down { color: var(--red); font-size: 12.5px; font-weight: 500; }
+
+.weight-bar { display: flex; align-items: center; gap: 8px; }
+.wb-track { flex: 1; height: 3px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden; min-width: 55px; }
+.wb-fill { height: 100%; border-radius: 99px; }
+.wb-pct { font-size: 11.5px; color: rgba(255,255,255,0.28); width: 35px; text-align: right; }
+
+.mini-chart { display: block; }
+
+/* ── MODAL ────────────────────────────────────────────── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
+  z-index: 100; align-items: center; justify-content: center; padding: 1rem;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--noir-2);
+  border: 1px solid var(--bord-2);
+  border-radius: 16px; padding: 28px;
+  width: 520px; max-width: 100%;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+}
+.modal-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px;
+}
+.modal-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px; font-weight: 600;
+}
+.modal-close {
+  background: var(--noir-3); border: 1px solid var(--bord);
+  color: rgba(255,255,255,0.4); border-radius: 7px;
+  width: 30px; height: 30px; cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.modal-close:hover { border-color: var(--ambre); color: var(--ambre); }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.form-grid .full { grid-column: span 2; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+}
+.field input, .field select {
+  background: var(--noir-3); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; padding: 10px 13px;
+  color: var(--blanc); font-family: 'Outfit', sans-serif; font-size: 13.5px;
+  outline: none; transition: border-color 0.18s;
+}
+.field input:focus, .field select:focus { border-color: var(--ambre); }
+.field select option { background: var(--noir-3); }
+
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.btn-cancel {
+  background: var(--noir-3); border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.4); border-radius: 8px;
+  padding: 10px 20px; font-family: 'Outfit', sans-serif;
+  font-size: 13px; cursor: pointer; transition: all 0.15s;
+}
+.btn-cancel:hover { color: rgba(255,255,255,0.7); }
+.btn-save {
+  background: var(--ambre); color: var(--noir);
+  border: none; border-radius: 8px;
+  padding: 10px 24px; font-family: 'Outfit', sans-serif;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.18s;
+}
+.btn-save:hover { background: var(--ambre-d); color: var(--blanc); }
+
+/* ── TOAST ────────────────────────────────────────────── */
+#toast {
+  position: fixed; bottom: 22px; right: 22px;
+  background: var(--noir-3); border: 1px solid var(--bord-2);
+  border-radius: 10px; padding: 12px 18px;
+  font-size: 13px; z-index: 999; max-width: 300px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  transform: translateY(70px); opacity: 0;
+  transition: all 0.22s;
+}
+#toast.show { transform: translateY(0); opacity: 1; }
+#toast.ok { border-color: rgba(74,222,128,0.3); color: var(--green); }
+#toast.err { border-color: rgba(248,113,113,0.3); color: var(--red); }
+
+/* ── SCROLLBAR ────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--noir-4); border-radius: 3px; }
+
+/* ── RESPONSIVE ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .content { padding: 18px; }
+  .hero-value { font-size: 34px; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── SIDEBAR ───────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">P</div>
+      <div class="logo-text">Peak <span>Patrimoine</span></div>
+    </div>
+
+    <div class="sidebar-nw">
+      <span class="snw-label">Patrimoine net</span>
+      <div class="snw-val" id="sb-total">—</div>
+      <div class="snw-change up" id="sb-change">—</div>
+    </div>
+
+    <div class="nav-section">Suivi</div>
+    <div class="nav-item active"><span class="nav-icon">⊞</span> Dashboard</div>
+    <div class="nav-item"><span class="nav-icon">◰</span> Mes actifs</div>
+    <div class="nav-item"><span class="nav-icon">◷</span> Historique</div>
+    <div class="nav-item"><span class="nav-icon">↗</span> Performance</div>
+
+    <div class="nav-section">Analyse</div>
+    <div class="nav-item"><span class="nav-icon">⊙</span> Allocation</div>
+    <div class="nav-item"><span class="nav-icon">◈</span> Dividendes</div>
+    <div class="nav-item"><span class="nav-icon">%</span> Fiscalité IFI</div>
+
+    <div class="nav-section">Outils</div>
+    <div class="nav-item"><span class="nav-icon">⇄</span> Intégrations</div>
+    <div class="nav-item"><span class="nav-icon">↑</span> Import CSV</div>
+
+    <div class="sidebar-bottom">
+      <button class="btn-upgrade">✦ Passer à Peak Pro</button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ──────────────────────────── -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-tabs">
+        <div class="tab active" onclick="switchTab(this)">Patrimoine net</div>
+        <div class="tab" onclick="switchTab(this)">Patrimoine brut</div>
+        <div class="tab" onclick="switchTab(this)">Financier</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-add" onclick="openModal()">+ Ajouter un actif</button>
+        <div class="topbar-avatar">JP</div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- HERO -->
+      <div class="hero-row">
+        <div class="hero-value-block">
+          <span class="hero-eyebrow">Patrimoine net total</span>
+          <div class="hero-value" id="heroVal">—</div>
+          <div class="hero-sub">
+            <span class="perf-badge up" id="heroBadge">—</span>
+            <span class="hero-date" id="heroDate">—</span>
+          </div>
+        </div>
+        <div class="time-tabs">
+          <div class="tt active" onclick="setRange('1m',this)">1M</div>
+          <div class="tt" onclick="setRange('3m',this)">3M</div>
+          <div class="tt" onclick="setRange('6m',this)">6M</div>
+          <div class="tt" onclick="setRange('1y',this)">1A</div>
+          <div class="tt" onclick="setRange('all',this)">Tout</div>
+        </div>
+      </div>
+
+      <!-- AREA CHART -->
+      <div class="chart-card">
+        <div class="chart-top">
+          <span class="chart-title">Évolution du patrimoine</span>
+          <span class="chart-range-lbl" id="rangeLbl">30 derniers jours</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="areaChart"></canvas>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card-eyebrow">Valeur totale</div>
+          <div class="stat-card-val ambre" id="st-total">—</div>
+          <div class="stat-card-sub">Patrimoine net</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-eyebrow">Performance</div>
+          <div class="stat-card-val up" id="st-perf">—</div>
+          <div class="stat-card-sub" id="st-perf-sub">sur la période</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-eyebrow">Plus-value latente</div>
+          <div class="stat-card-val up" id="st-pv">—</div>
+          <div class="stat-card-sub">Estimation</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-eyebrow">Actifs suivis</div>
+          <div class="stat-card-val" id="st-count">—</div>
+          <div class="stat-card-sub" id="st-count-sub">—</div>
+        </div>
+      </div>
+
+      <!-- SPLIT -->
+      <div class="split">
+
+        <!-- CAT ALLOCATION -->
+        <div class="cat-block">
+          <div class="block-header">
+            <span class="block-title">Allocation</span>
+            <select class="sort-sel" id="sortSel" onchange="renderCatRows()">
+              <option value="value">Par valeur ↓</option>
+              <option value="name">Par nom</option>
+            </select>
+          </div>
+          <div id="catRows"></div>
+        </div>
+
+        <!-- DONUT -->
+        <div class="donut-card">
+          <div class="block-header" style="padding:0 0 14px;border-bottom:1px solid var(--bord)">
+            <span class="block-title">Répartition</span>
+          </div>
+          <div class="donut-wrap" style="margin-top:16px">
+            <canvas id="donutChart"></canvas>
+            <div class="donut-center">
+              <div class="donut-center-val" id="donutVal">—</div>
+              <div class="donut-center-lbl">Total</div>
+            </div>
+          </div>
+          <div class="donut-legend" id="donutLegend"></div>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-card">
+        <div class="block-header">
+          <span class="block-title">Mes actifs</span>
+          <button class="btn-add" style="padding:7px 14px;font-size:12.5px" onclick="openModal()">+ Ajouter</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Actif</th>
+              <th>Catégorie</th>
+              <th>Valeur</th>
+              <th>Variation 1M</th>
+              <th>Poids</th>
+              <th>Tendance 7j</th>
+            </tr>
+          </thead>
+          <tbody id="assetsTbody"></tbody>
+        </table>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title">Ajouter un actif</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="field full">
+        <label>Nom de l'actif</label>
+        <input id="mName" type="text" placeholder="ex: Livret A, ETF MSCI World, Appartement Nice…" />
+      </div>
+      <div class="field">
+        <label>Catégorie</label>
+        <select id="mCat">
+          <option value="bank">🏦 Comptes / Livrets</option>
+          <option value="invest">📈 PEA / CTO / Actions</option>
+          <option value="assurance">🛡️ Assurance-vie / PER</option>
+          <option value="immo">🏠 Immobilier</option>
+          <option value="crypto">₿ Crypto</option>
+          <option value="crowd">🤝 Crowdfunding</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Institution / Plateforme</label>
+        <input id="mInst" type="text" placeholder="BoursoBank, Ledger, Homunity…" />
+      </div>
+      <div class="field">
+        <label>Valeur actuelle (€)</label>
+        <input id="mVal" type="number" placeholder="0.00" min="0" step="0.01" />
+      </div>
+      <div class="field">
+        <label>Note (optionnel)</label>
+        <input id="mNote" type="text" placeholder="0.14 BTC, 12 parts SCPI…" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-save" onclick="saveAsset()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIG CATÉGORIES
+// ══════════════════════════════════════════════
+const CATS = {
+  bank:      { label:'Comptes / Livrets',   icon:'🏦', color:'#3b82f6' },
+  invest:    { label:'PEA / CTO / Actions', icon:'📈', color:'#4ade80' },
+  assurance: { label:'Assurance-vie / PER', icon:'🛡️', color:'#F0A738' },
+  immo:      { label:'Immobilier',          icon:'🏠', color:'#fb923c' },
+  crypto:    { label:'Crypto',              icon:'₿',  color:'#c084fc' },
+  crowd:     { label:'Crowdfunding',        icon:'🤝', color:'#2dd4bf' },
+};
+
+// ══════════════════════════════════════════════
+//  DONNÉES (démo + localStorage)
+// ══════════════════════════════════════════════
+let assets = [
+  { id:'1', name:'Livret A',               cat:'bank',      institution:'BoursoBank',    value:22500, chg1m:0,    note:'' },
+  { id:'2', name:'LDDS',                   cat:'bank',      institution:'Crédit Mutuel', value:12000, chg1m:0,    note:'' },
+  { id:'3', name:'PEA — ETF MSCI World',   cat:'invest',    institution:'Trade Republic',value:48600, chg1m:2.4,  note:'' },
+  { id:'4', name:'CTO — Actions US',       cat:'invest',    institution:'Trade Republic',value:14200, chg1m:-1.1, note:'' },
+  { id:'5', name:'AV Linxea Spirit 2',     cat:'assurance', institution:'Linxea',        value:31000, chg1m:0.8,  note:'' },
+  { id:'6', name:'Appartement Nice',       cat:'immo',      institution:'Direct',        value:185000,chg1m:0.3,  note:'' },
+  { id:'7', name:'Bitcoin',                cat:'crypto',    institution:'CoinStats',     value:9200,  chg1m:5.2,  note:'0.14 BTC' },
+  { id:'8', name:'Ethereum',               cat:'crypto',    institution:'Wallet ETH',    value:3800,  chg1m:3.1,  note:'1.4 ETH' },
+  { id:'9', name:'Crowdfunding Homunity',  cat:'crowd',     institution:'Homunity',      value:8000,  chg1m:0.6,  note:'' },
+];
+
+// Essai de chargement depuis le localStorage de l'app principale
+try {
+  const s = JSON.parse(localStorage.getItem('ptv2_data'));
+  if(s?.assets?.length) assets = s.assets.map(a => ({ ...a, chg1m: (Math.random()-.4)*5 }));
+} catch(e) {}
+
+// Historique simulé (60 jours)
+function genHistory() {
+  const total = assets.reduce((s,a)=>s+Number(a.value), 0);
+  const now = Date.now();
+  return Array.from({length:60},(_,i)=>{
+    const age = 59 - i;
+    const noise = (Math.random()-.45)*.016;
+    const trend = age < 30 ? (30-age)*.0013 : 0;
+    return { date: new Date(now - age*86400000).toISOString(), total: Math.round(total*(1 - age*.0038 + trend + noise)) };
+  });
+}
+const history = genHistory();
+
+let areaInst = null, donutInst = null;
+const miniMap = {};
+let range = '1m';
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+window.onload = () => { renderAll(); };
+
+function renderAll() {
+  const total = assets.reduce((s,a)=>s+Number(a.value), 0);
+  renderHero(total);
+  renderStats(total);
+  renderAreaChart();
+  renderCatRows();
+  renderDonut(total);
+  renderTable(total);
+}
+
+// ══════════════════════════════════════════════
+//  FORMAT
+// ══════════════════════════════════════════════
+const fmt  = n => Number(n).toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const fmt2 = n => Number(n).toLocaleString('fr-FR',{style:'currency',currency:'EUR',minimumFractionDigits:2});
+const fmtK = n => {
+  const abs = Math.abs(n);
+  if(abs>=1e6) return (n/1e6).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' M€';
+  if(abs>=1e3) return (n/1e3).toLocaleString('fr-FR',{minimumFractionDigits:1,maximumFractionDigits:1})+' k€';
+  return fmt(n);
+};
+
+// ══════════════════════════════════════════════
+//  HERO
+// ══════════════════════════════════════════════
+function renderHero(total) {
+  document.getElementById('heroVal').textContent = fmtK(total);
+  document.getElementById('sb-total').textContent = fmtK(total);
+
+  const first = history[0]?.total || total;
+  const diff = total - first; const pct = (diff/first*100).toFixed(2);
+  const sign = diff>=0?'+':''; const cls = diff>=0?'up':'down';
+  const badge = document.getElementById('heroBadge');
+  badge.textContent = `${sign}${fmtK(diff)} (${sign}${pct}%)`;
+  badge.className = `perf-badge ${cls}`;
+  document.getElementById('heroDate').textContent = `depuis le ${new Date(history[0].date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}`;
+  const sbChg = document.getElementById('sb-change');
+  sbChg.textContent = `${sign}${pct}% ce mois`;
+  sbChg.className = `snw-change ${cls}`;
+}
+
+// ══════════════════════════════════════════════
+//  STATS
+// ══════════════════════════════════════════════
+function renderStats(total) {
+  document.getElementById('st-total').textContent = fmtK(total);
+  const first = history[0]?.total||total;
+  const diff = total-first; const pct = (diff/first*100).toFixed(1);
+  const sign = diff>=0?'+':''; const cls = diff>=0?'up':'down';
+  const pe = document.getElementById('st-perf');
+  pe.textContent = `${sign}${pct}%`; pe.className = `stat-card-val ${cls}`;
+  const pv = document.getElementById('st-pv');
+  pv.textContent = `${sign}${fmtK(diff)}`; pv.className = `stat-card-val ${cls}`;
+  document.getElementById('st-count').textContent = assets.length;
+  const cats = new Set(assets.map(a=>a.cat));
+  document.getElementById('st-count-sub').textContent = `dans ${cats.size} catégorie${cats.size>1?'s':''}`;
+}
+
+// ══════════════════════════════════════════════
+//  AREA CHART
+// ══════════════════════════════════════════════
+function getSnaps() {
+  const n = {  '1m':30,'3m':90,'6m':180,'1y':365,'all':9999 }[range]||30;
+  return history.slice(-Math.min(n, history.length));
+}
+
+function renderAreaChart() {
+  const snaps = getSnaps();
+  const labels = snaps.map(s => new Date(s.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}));
+  const data = snaps.map(s => s.total);
+  const isUp = data[data.length-1] >= data[0];
+  const lineClr = isUp ? '#F0A738' : '#f87171';
+  const ctx = document.getElementById('areaChart').getContext('2d');
+  if(areaInst) areaInst.destroy();
+
+  const grad = ctx.createLinearGradient(0,0,0,210);
+  if(isUp) { grad.addColorStop(0,'rgba(240,167,56,0.18)'); grad.addColorStop(1,'rgba(240,167,56,0)'); }
+  else     { grad.addColorStop(0,'rgba(248,113,113,0.16)'); grad.addColorStop(1,'rgba(248,113,113,0)'); }
+
+  areaInst = new Chart(ctx, {
+    type:'line',
+    data:{labels,datasets:[{
+      data, borderColor:lineClr, backgroundColor:grad,
+      borderWidth:2, pointRadius:0,
+      pointHoverRadius:5, pointHoverBackgroundColor:lineClr,
+      pointHoverBorderColor:'#fff', pointHoverBorderWidth:2,
+      fill:true, tension:0.42
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'rgba(22,22,22,0.96)',
+          borderColor:'rgba(240,167,56,0.2)',
+          borderWidth:1,
+          titleColor:'rgba(255,255,255,0.35)',
+          bodyColor:'#fff',
+          padding:12,
+          titleFont:{family:'Outfit',size:11},
+          bodyFont:{family:'Outfit',size:13,weight:'600'},
+          callbacks:{
+            title: items => new Date(snaps[items[0].dataIndex].date).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}),
+            label: c => ` ${fmt(c.raw)}`
+          }
+        }
+      },
+      scales:{
+        x:{
+          grid:{color:'rgba(255,255,255,0.04)',drawTicks:false},
+          border:{display:false},
+          ticks:{color:'rgba(255,255,255,0.22)',font:{family:'Outfit',size:11},maxTicksLimit:7,maxRotation:0}
+        },
+        y:{
+          grid:{color:'rgba(255,255,255,0.04)',drawTicks:false},
+          border:{display:false},
+          ticks:{color:'rgba(255,255,255,0.22)',font:{family:'Outfit',size:11},callback:v=>fmtK(v)},
+          min: Math.min(...data)*.997,
+          max: Math.max(...data)*1.003
+        }
+      }
+    }
+  });
+}
+
+function setRange(r, el) {
+  range = r;
+  document.querySelectorAll('.tt').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const lbl = {'1m':'30 derniers jours','3m':'3 derniers mois','6m':'6 derniers mois','1y':'12 derniers mois','all':'Depuis le début'}[r];
+  document.getElementById('rangeLbl').textContent = lbl;
+  renderAreaChart();
+}
+
+// ══════════════════════════════════════════════
+//  CAT ROWS
+// ══════════════════════════════════════════════
+function renderCatRows() {
+  const total = assets.reduce((s,a)=>s+Number(a.value),0);
+  const ct = {}; assets.forEach(a=>{ ct[a.cat]=(ct[a.cat]||0)+Number(a.value); });
+  let entries = Object.entries(ct).filter(([,v])=>v>0);
+  if(document.getElementById('sortSel').value==='name')
+    entries.sort((a,b)=>CATS[a[0]].label.localeCompare(CATS[b[0]].label));
+  else entries.sort((a,b)=>b[1]-a[1]);
+  const maxV = Math.max(...entries.map(([,v])=>v));
+
+  document.getElementById('catRows').innerHTML = entries.map(([key,val])=>{
+    const cat=CATS[key]; const pct=(val/total*100).toFixed(1);
+    const n=assets.filter(a=>a.cat===key).length;
+    const barW=maxV>0?(val/maxV*100):0;
+    return `
+    <div class="cat-row">
+      <div class="cat-dot" style="background:${cat.color}"></div>
+      <span class="cat-name">${cat.icon} ${cat.label}</span>
+      <span class="cat-count">${n} actif${n>1?'s':''}</span>
+      <div class="cat-bar-wrap">
+        <div class="cat-bar-fill" style="width:${barW}%;background:${cat.color}55;border-right:2px solid ${cat.color}"></div>
+      </div>
+      <span class="cat-pct">${pct}%</span>
+      <span class="cat-val">${fmtK(val)}</span>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  DONUT
+// ══════════════════════════════════════════════
+function renderDonut(total) {
+  const ct={}; assets.forEach(a=>{ct[a.cat]=(ct[a.cat]||0)+Number(a.value);});
+  const entries=Object.entries(ct).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const ctx=document.getElementById('donutChart').getContext('2d');
+  if(donutInst) donutInst.destroy();
+
+  donutInst = new Chart(ctx,{
+    type:'doughnut',
+    data:{
+      labels:entries.map(([k])=>CATS[k].label),
+      datasets:[{
+        data:entries.map(([,v])=>v),
+        backgroundColor:entries.map(([k])=>CATS[k].color+'bb'),
+        borderColor:entries.map(([k])=>CATS[k].color),
+        borderWidth:2, hoverOffset:6
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'70%',
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'rgba(22,22,22,0.96)',
+          borderColor:'rgba(240,167,56,0.2)',
+          borderWidth:1,
+          bodyColor:'#fff', padding:10,
+          bodyFont:{family:'Outfit',size:13},
+          callbacks:{label:c=>` ${fmt(c.raw)}  (${(c.raw/total*100).toFixed(1)}%)`}
+        }
+      }
+    }
+  });
+
+  document.getElementById('donutVal').textContent = fmtK(total);
+  document.getElementById('donutLegend').innerHTML = entries.slice(0,5).map(([k,v])=>`
+    <div class="legend-row">
+      <div class="legend-dot" style="background:${CATS[k].color}"></div>
+      <span class="legend-name">${CATS[k].icon} ${CATS[k].label}</span>
+      <span class="legend-pct">${(v/total*100).toFixed(1)}%</span>
+      <span class="legend-val">${fmtK(v)}</span>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+//  SPARKLINES
+// ══════════════════════════════════════════════
+function renderMini(id, positive) {
+  const el = document.getElementById(id); if(!el) return;
+  const ctx = el.getContext('2d');
+  const pts = Array.from({length:14},(_,i)=>{
+    const t=i/13; const trend=positive?t*.07:-t*.07;
+    return 50+trend*100+(Math.random()-.5)*9;
+  });
+  if(miniMap[id]) miniMap[id].destroy();
+  miniMap[id] = new Chart(ctx,{
+    type:'line',
+    data:{labels:pts.map((_,i)=>i),datasets:[{data:pts,borderColor:positive?'#F0A738':'#f87171',borderWidth:1.5,pointRadius:0,fill:false,tension:0.4}]},
+    options:{responsive:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}},animation:{duration:0}}
+  });
+}
+
+// ══════════════════════════════════════════════
+//  ASSETS TABLE
+// ══════════════════════════════════════════════
+function renderTable(total) {
+  const sorted = [...assets].sort((a,b)=>Number(b.value)-Number(a.value));
+  document.getElementById('assetsTbody').innerHTML = sorted.map(a=>{
+    const cat=CATS[a.cat]; const pct=(Number(a.value)/total*100).toFixed(1);
+    const chg=a.chg1m||0; const sign=chg>=0?'+':''; const cls=chg>=0?'chg-up':'chg-down';
+    return `<tr>
+      <td>
+        <div class="asset-wrap">
+          <div class="asset-icon" style="background:${cat.color}18">${cat.icon}</div>
+          <div>
+            <div class="asset-name">${a.name}</div>
+            <div class="asset-sub">${a.institution||'—'}${a.note?' · '+a.note:''}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="tag-pill" style="background:${cat.color}18;color:${cat.color}">${cat.label}</span></td>
+      <td style="font-family:'Playfair Display',serif;font-size:14px;font-weight:600">${fmt2(a.value)}</td>
+      <td><span class="${cls}">${sign}${chg.toFixed(2)}%</span></td>
+      <td>
+        <div class="weight-bar">
+          <div class="wb-track"><div class="wb-fill" style="width:${pct}%;background:${cat.color}"></div></div>
+          <span class="wb-pct">${pct}%</span>
+        </div>
+      </td>
+      <td><canvas id="mini_${a.id}" width="82" height="36" class="mini-chart"></canvas></td>
+    </tr>`;
+  }).join('');
+  requestAnimationFrame(()=>sorted.forEach(a=>renderMini(`mini_${a.id}`, (a.chg1m||0)>=0)));
+}
+
+// ══════════════════════════════════════════════
+//  MODAL
+// ══════════════════════════════════════════════
+function openModal() {
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('mName').focus();
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+function saveAsset() {
+  const name=document.getElementById('mName').value.trim();
+  const cat =document.getElementById('mCat').value;
+  const inst=document.getElementById('mInst').value.trim();
+  const val =parseFloat(document.getElementById('mVal').value);
+  const note=document.getElementById('mNote').value.trim();
+  if(!name){toast('Nom requis','err');return;}
+  if(isNaN(val)||val<0){toast('Valeur invalide','err');return;}
+  assets.push({id:crypto.randomUUID(),name,cat,institution:inst,value:val,chg1m:0,note});
+  // Sync localStorage
+  try{
+    const s=JSON.parse(localStorage.getItem('ptv2_data'))||{assets:[],snapshots:[]};
+    s.assets=assets; localStorage.setItem('ptv2_data',JSON.stringify(s));
+  }catch(e){}
+  closeModal(); renderAll(); toast(`${name} ajouté ✓`,'ok');
+  ['mName','mInst','mVal','mNote'].forEach(id=>document.getElementById(id).value='');
+}
+
+document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+// ══════════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════════
+function switchTab(el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+let toastTimer;
+function toast(msg, type='ok') {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className=`show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.className='',2600);
+}
+</script>
+</body>
+</html>
